@@ -1,7 +1,7 @@
-import { html } from 'lit';
-import { fixture, expect } from '@open-wc/testing';
-import { RRouter } from '../src/RRouter.js';
-import '../src/r-router.js';
+// import { html } from 'lit';
+// import { fixture, expect } from '@open-wc/testing';
+// import { RRouter } from '../src/RRouter.js';
+// import '../src/r-router.js';
 
 // describe('RRouter', () => {
 //   it('has a default title "Hey there" and counter 5', async () => {
