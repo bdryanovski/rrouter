@@ -19,7 +19,7 @@
     /* eslint-disable max-classes-per-file */
 
     import { RRouter } from '../dist/src/index.js';
-    import '../dist/src/r-link.js'
+    import '../dist/src/r-link.register.js'
 
     class Home extends HTMLElement {
       connectedCallback() {
@@ -57,6 +57,7 @@
         { path: '*', component: 'page-not-found' },
       ];
     }
+
     window.customElements.define("my-application", Application);
   </script>
 
