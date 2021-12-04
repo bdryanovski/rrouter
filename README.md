@@ -14,45 +14,55 @@ npm install r-router
 ## Usage
 
 ```html
-<script type="module">
-  import { RRouter, RLink } from 'r-router/index.js';
+  <script type="module">
+    import { html, render } from 'lit';
 
-  class Home extends HTMLElement {
-    connectedCallback() {
-      this.innerHTML = '<h1>Home</h1>';
+    import { RRouter } from '../dist/src/index.js';
+    import '../dist/src/r-link.j'
+
+    class Home extends HTMLElement {
+      connectedCallback() {
+        this.innerHTML = '<h1>Home</h1>';
+      }
     }
-  }
-  window.customElements.define("page-home", Home);
+    window.customElements.define("page-home", Home);
 
-   class Posts extends HTMLElement {
-    connectedCallback() {
-      this.innerHTML = '<h1>Posts</h1>';
+    class Posts extends HTMLElement {
+      connectedCallback() {
+        this.innerHTML = '<h1>Posts</h1>';
+      }
     }
-   }
-  window.customElements.define("page-posts", Posts);
+    window.customElements.define("page-posts", Posts);
 
-   class About extends HTMLElement {
-     connectedCallback() {
-       this.innerHTML = '<h1>About</h1>';
-     }
-   }
-  window.customElements.define("page-about", About);
+    class About extends HTMLElement {
+      connectedCallback() {
+        this.innerHTML = '<h1>About</h1>';
+      }
+    }
+    window.customElements.define("page-about", About);
 
-  class Application extends RRouter {
-    public routes = [
-      { path: '/', component: 'page-home' },
-      { path: '/posts', component: 'page-posts' },
-      { path: '/about', component: 'page-about' },
-    ]
-  }
+    class NotFound extends HTMLElement {
+      connectedCallback() {
+        this.innerHTML = '<h1>Page Not Found 404</h1>';
+      }
+    }
+    window.customElements.define("page-not-found", NotFound);
 
-  window.customElements.define("my-application", Application);
+    class Application extends RRouter {
+      routes = [
+        { path: '/', component: 'page-home' },
+        { path: '/posts', component: 'page-posts' },
+        { path: '/about', component: 'page-about' },
+        { path: '*', component: 'page-not-found' },
+      ];
+    }
+    window.customElements.define("my-application", Application);
+  </script>
 
-</script>
-
-<my-application>
+  <my-application>
   <div class="container">
 
+    <h3>Navigation</h3>
     <div class="navigation">
       <ul>
         <li><r-link route="/">Home</r-link></li>
@@ -61,6 +71,7 @@ npm install r-router
       </ul>
     </div>
 
+    <h3>Content: </h3>
     <div class="main">
       <!-- the content of the pages will be inserted here -->
       <r-outlet />
