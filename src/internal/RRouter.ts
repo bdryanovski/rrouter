@@ -1,12 +1,5 @@
+import { Route } from '../types.js';
 import { match } from './utils.js';
-
-export type ActiveRoute = {
-  path: string;
-  params?: { [key: string]: string };
-  component?: any;
-  before?: () => boolean;
-  after?: () => boolean;
-};
 
 /**
  * Extends HTMLElement we don't require any complex structure at the moment
@@ -14,13 +7,13 @@ export type ActiveRoute = {
  */
 export class RRouter extends HTMLElement {
   /* List of routes */
-  public routes: ActiveRoute[] = [];
+  public routes: Route[] = [];
 
   public basePath: string = '/';
 
   public hashbang: boolean = true;
 
-  private activeRoute?: ActiveRoute;
+  private activeRoute?: Route;
 
   /**
    * Store after callback, in the case that we need to use it later

@@ -1,4 +1,4 @@
-import { RRouter } from '../../../src/RRouter.js';
+import { RRouter } from '../../../src/internal/RRouter.js';
 
 export class Application extends RRouter {
   public routes = [

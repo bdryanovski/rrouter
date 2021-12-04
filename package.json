@@ -8,7 +8,10 @@
   "module": "dist/src/index.js",
   "exports": {
     ".": "./dist/src/index.js",
-    "./r-router.js": "./dist/src/r-router.js"
+    "./r-router.js": "./dist/src/r-router.register.js",
+    "./r-router.register.js": "./dist/src/r-router.register.js",
+    "./r-link.js": "./dist/src/r-link.register.js",
+    "./r-link.register.js": "./dist/src/r-link.register.js"
   },
   "scripts": {
     "analyze": "cem analyze --litelement",

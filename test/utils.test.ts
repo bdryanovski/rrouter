@@ -1,5 +1,5 @@
 import { expect } from '@open-wc/testing';
-import { match } from '../src/utils.js';
+import { match } from '../src/internal/utils.js';
 
 describe('Utils', () => {
   describe('Match', () => {
