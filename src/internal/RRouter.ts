@@ -36,7 +36,7 @@ export class RRouter extends HTMLElement {
   connectedCallback(): void {
     /**
      * In the case when no root is set try to navigate to
-     * patname or just normal | (pipe)
+     * hash or just normal '/'
      */
     this._navigate(window.location.hash.replace('#', '') || this.basePath);
   }
