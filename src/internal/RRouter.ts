@@ -5,7 +5,7 @@ import { match } from './utils.js';
 /**
  * History class and implementation
  */
-import { BrowserHistory, createBrowserHistory, parsePath, Path } from './history.js'
+import { BrowserHistory, parsePath, Path } from './history.js'
 
 /**
  * Extends HTMLElement we don't require any complex structure at the moment
@@ -15,22 +15,26 @@ export class RRouter extends HTMLElement {
   /* List of routes */
   public routes: Route[] = [];
 
+  public history: BrowserHistory;
+
   private activeRoute?: Route;
 
-  private history: BrowserHistory = createBrowserHistory();
   private unlisten: () => void;
 
   /**
-   * Use the constructor to register the event listener and be ready
-   * to handle events as soon as possible.
+   * Take in mind the base URL if provided
+   * @return string
    */
-  constructor() {
-    super();
+  private get base(): string {
+    // To not make more if's that I wanted, i'm just stubing the method that I require to get
+    // the information that I need
+    return (document.querySelector('base') || { getAttribute: () => '/'}).getAttribute('href');
+  }
 
+  connectedCallback(): void {
     /**
      * Handle calls from outside and navigate to somewhere else
      */
-    // @ts-ignore
     window.addEventListener('router:navigate', this._handleNavigationRequest);
 
     /**
@@ -40,24 +44,16 @@ export class RRouter extends HTMLElement {
       this._navigate(location)
     });
 
-  }
-
-  connectedCallback(): void {
-    /**
-     * Initial tick to load the history and run it.
-     */
-    this.history.go(0)
+    // Initial route
+    this._navigate(this.history.location)
   }
 
   /**
    * Cleanup after the router is removed from the DOM.
+   * @return void
    */
   disconnectedCallback(): void {
-    // @ts-ignore
-    window.removeEventListener(
-      'router:navigate',
-      this._handleNavigationRequest
-    );
+    window.removeEventListener('router:navigate', this._handleNavigationRequest);
     this.unlisten();
   }
 
@@ -65,24 +61,52 @@ export class RRouter extends HTMLElement {
    * Handle navigation request from outside world.
    *
    * @param eventData {Object}
+   * @return  void
    */
   _handleNavigationRequest = (eventData: CustomEvent): void => {
+    // Parsing url is the only thing that we need here
     this._navigate(parsePath(eventData.detail.route));
   };
+
+  /**
+   * Calculate and address the base URL if provided
+   *
+   * @param url Path
+   * @return Path
+   */
+  private calculateUrl(url: Partial<Path>): Partial<Path> {
+
+    let virtualUrl = url.pathname.replace(this.base, '')
+
+    // When we hit the case when there is nothing left - fallback to empty '/'
+    if (virtualUrl === '') {
+      virtualUrl = '/'
+    }
+
+    return {
+      pathname: virtualUrl,
+      hash: url.hash,
+      search: url.search
+    }
+  }
 
   /**
    * Navigate to the given route. This method must stay private and not be
    * call from outside.
    *
    * @param url {string} - url to navigate to
+   * @return void
    */
-  private _navigate(url: Partial<Path>) {
-    const matchedRoute = match(this.routes, (url.hash || url.pathname).replace('#', ''));
+  private _navigate(url: Partial<Path>): void {
+
+    const virtual = this.calculateUrl(url);
+
+    const matchedRoute = match(this.routes, virtual.pathname);
 
     // update active route if there is a match
     if (matchedRoute !== null) {
       this.activeRoute = matchedRoute;
-      this.activeRoute.request = url;
+      this.activeRoute.request = virtual;
 
       /**
        * Broadcast event to outside world to notify that the route has been
@@ -103,8 +127,10 @@ export class RRouter extends HTMLElement {
 
   /**
    * Render the current route.
+   *
+   * @return void
    */
-  private _render() {
+  private _render(): void {
     const {
       component,
       params = {},
@@ -119,6 +145,9 @@ export class RRouter extends HTMLElement {
       if (component) {
         const canContinue = (before && typeof before === 'function') ? before() : () => { return true };
 
+        /**
+         * If before hook return false prevent the transition
+         */
         if (canContinue === false || canContinue === null) {
           return;
         }
@@ -144,6 +173,9 @@ export class RRouter extends HTMLElement {
 
         outlet.appendChild(view);
 
+        /**
+         * Call after callback and pass the activeRoute object
+         */
         if (after && typeof after === 'function') {
           after({ route: this.activeRoute });
         }

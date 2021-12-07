@@ -2,6 +2,7 @@
 <html lang="en-GB">
 <head>
   <meta charset="utf-8">
+  <base href="/demo" />
   <style>
     @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap");
     * { box-sizing: border-box; padding: 0; margin: 0; }
@@ -18,7 +19,7 @@
   <script type="module">
     /* eslint-disable max-classes-per-file */
 
-    import { RRouter } from '../dist/src/index.js';
+    import { RRouter, createBrowserHistory } from '../dist/src/index.js';
     import '../dist/src/r-link.register.js'
 
     class Home extends HTMLElement {
@@ -49,7 +50,10 @@
     }
     window.customElements.define("page-not-found", NotFound);
 
+    const history = createBrowserHistory();
+
     class Application extends RRouter {
+      history = history;
       routes = [
         { path: '/', component: 'page-home' },
         { path: '/posts', component: 'page-posts' },
