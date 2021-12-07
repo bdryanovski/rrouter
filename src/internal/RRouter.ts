@@ -1,5 +1,11 @@
+
 import { Route } from '../types.js';
 import { match } from './utils.js';
+
+/**
+ * History class and implementation
+ */
+import { BrowserHistory, createBrowserHistory, parsePath, Path } from './history.js'
 
 /**
  * Extends HTMLElement we don't require any complex structure at the moment
@@ -9,16 +15,10 @@ export class RRouter extends HTMLElement {
   /* List of routes */
   public routes: Route[] = [];
 
-  public basePath: string = '/';
-
-  public hashbang: boolean = true;
-
   private activeRoute?: Route;
 
-  /**
-   * Store after callback, in the case that we need to use it later
-   */
-  private afterCallback?: () => boolean = () => true;
+  private history: BrowserHistory = createBrowserHistory();
+  private unlisten: () => void;
 
   /**
    * Use the constructor to register the event listener and be ready
@@ -27,18 +27,26 @@ export class RRouter extends HTMLElement {
   constructor() {
     super();
 
+    /**
+     * Handle calls from outside and navigate to somewhere else
+     */
     // @ts-ignore
     window.addEventListener('router:navigate', this._handleNavigationRequest);
-    // @ts-ignore
-    window.addEventListener('popstate', this._handlePopstateChanges);
+
+    /**
+     * Listen for changes from outside like url changes and more
+     */
+    this.unlisten = this.history.listen(({ location }) => {
+      this._navigate(location)
+    });
+
   }
 
   connectedCallback(): void {
     /**
-     * In the case when no root is set try to navigate to
-     * hash or just normal '/'
+     * Initial tick to load the history and run it.
      */
-    this._navigate(window.location.hash.replace('#', '') || this.basePath);
+    this.history.go(0)
   }
 
   /**
@@ -50,12 +58,8 @@ export class RRouter extends HTMLElement {
       'router:navigate',
       this._handleNavigationRequest
     );
-    window.removeEventListener('popstate', this._handlePopstateChanges);
+    this.unlisten();
   }
-
-  _handlePopstateChanges = (): void => {
-    this._navigate(window.location.hash.replace('#', ''));
-  };
 
   /**
    * Handle navigation request from outside world.
@@ -63,7 +67,7 @@ export class RRouter extends HTMLElement {
    * @param eventData {Object}
    */
   _handleNavigationRequest = (eventData: CustomEvent): void => {
-    this._navigate(eventData.detail.route);
+    this._navigate(parsePath(eventData.detail.route));
   };
 
   /**
@@ -72,14 +76,13 @@ export class RRouter extends HTMLElement {
    *
    * @param url {string} - url to navigate to
    */
-  private _navigate(url: string) {
-    const matchedRoute = match(this.routes, url);
+  private _navigate(url: Partial<Path>) {
+    const matchedRoute = match(this.routes, (url.hash || url.pathname).replace('#', ''));
 
     // update active route if there is a match
     if (matchedRoute !== null) {
       this.activeRoute = matchedRoute;
-      // @ts-ignore
-      window.history.pushState(null, null, `#${url}`);
+      this.activeRoute.request = url;
 
       /**
        * Broadcast event to outside world to notify that the route has been
@@ -105,6 +108,7 @@ export class RRouter extends HTMLElement {
     const {
       component,
       params = {},
+      request = {},
       before = () => true,
       after = () => true,
     } = this.activeRoute || {};
@@ -113,19 +117,11 @@ export class RRouter extends HTMLElement {
 
     if (outlet) {
       if (component) {
-        if (this.afterCallback && typeof this.afterCallback === 'function') {
-          this.afterCallback();
-        }
-
-        const canContinue = before();
+        const canContinue = (before && typeof before === 'function') ? before() : () => { return true };
 
         if (canContinue === false || canContinue === null) {
           return;
         }
-
-        // Store after after callback for later.
-        this.afterCallback = after;
-
         // Remove all child nodes under outlet element
         while (outlet.firstChild) {
           outlet.removeChild(outlet.firstChild);
@@ -142,7 +138,15 @@ export class RRouter extends HTMLElement {
           if (key !== '*') view.setAttribute(key, params[key]);
         }
 
+        if (request && request.search) {
+          view.setAttribute('rRouterQuerySearch', request.search)
+        }
+
         outlet.appendChild(view);
+
+        if (after && typeof after === 'function') {
+          after({ route: this.activeRoute });
+        }
       }
     }
   }
